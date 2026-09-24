@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Q-SYS Reflect card preview</title>
+  <style>
+    :root { color-scheme: light dark; }
+    body { margin: 0; background: #e9e8e4; color: #16181a; font: 14px/1.4 ui-sans-serif, system-ui, sans-serif; }
+    body[data-theme="dark"] { background: #0d0e0f; color: #eceeef; }
+    .chrome { max-width: 760px; margin: 0 auto; padding: 16px; }
+    .bar { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin: 10px 0 16px; }
+    .bar button { min-height: 36px; padding: 0 12px; border-radius: 8px; border: 1px solid #c9c8c2; background: #fff; color: inherit; font: inherit; cursor: pointer; }
+    body[data-theme="dark"] .bar button { background: #1c1e20; border-color: #34383c; }
+    .bar button[aria-pressed="true"] { outline: 2px solid currentColor; }
+    .bar .sep { width: 1px; height: 24px; background: #c9c8c2; margin: 0 4px; }
+    .note { margin: 0; font-size: 13px; opacity: 0.75; }
+    .column { max-width: 100%; margin: 0 auto; border-radius: 16px; overflow: hidden; box-shadow: 0 1px 2px rgba(0,0,0,.08), 0 8px 24px rgba(0,0,0,.08); }
+    iframe { width: 100%; border: 0; display: block; height: 320px; background: transparent; }
+    #status { margin: 12px 0 0; font-size: 12px; opacity: 0.6; }
+    body[data-bare] .note, body[data-bare] .bar, body[data-bare] #status { display: none; }
+    body[data-bare] .chrome { padding: 24px; }
+  </style>
+</head>
+<body>
+  <div class="chrome">
+    <p class="note">Local MCP Apps host. The card below is the real <code>ui://</code> resource, fed by the real server in demo mode.</p>
+    <div class="bar">
+      <button type="button" data-tool="get_fleet_health">Fleet</button>
+      <button type="button" data-tool="get_system" data-system="202">Arena system</button>
+      <button type="button" data-tool="get_system" data-system="204">Healthy system</button>
+      <span class="sep"></span>
+      <button type="button" data-theme="light">Light</button>
+      <button type="button" data-theme="dark">Dark</button>
+      <span class="sep"></span>
+      <button type="button" data-width="360">360</button>
+      <button type="button" data-width="520">520</button>
+      <button type="button" data-width="680">680</button>
+    </div>
+    <div class="column" id="column"><iframe id="card" title="Q-SYS Reflect status card" sandbox="allow-scripts"></iframe></div>
+    <p id="status">Connecting…</p>
+  </div>
+  <script src="/host.js"></script>
+</body>
+</html>

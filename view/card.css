@@ -1,0 +1,120 @@
+/* Host variables first (MCP Apps style tokens), with fallbacks for hosts that send none. */
+:root {
+  color-scheme: light dark;
+  --bg: var(--color-background-primary, #ffffff);
+  --bg-2: var(--color-background-secondary, #f4f4f2);
+  --fg: var(--color-text-primary, #16181a);
+  --fg-2: var(--color-text-secondary, #555b61);
+  --fg-3: var(--color-text-tertiary, #80868c);
+  --line: var(--color-border-primary, #e3e3df);
+  --ok: var(--color-text-success, #1f7a4d);
+  --warn: var(--color-text-warning, #a15c00);
+  --fault: var(--color-text-danger, #c0322b);
+  --unknown: var(--fg-3);
+  --ok-bg: var(--color-background-success, #e7f4ec);
+  --warn-bg: var(--color-background-warning, #fcf0dc);
+  --fault-bg: var(--color-background-danger, #fbe6e4);
+  --unknown-bg: var(--bg-2);
+  --radius: var(--border-radius-md, 10px);
+  --sans: var(--font-sans, ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif);
+  --mono: var(--font-mono, ui-monospace, "SF Mono", Menlo, Consolas, monospace);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: var(--color-background-primary, #151719);
+    --bg-2: var(--color-background-secondary, #1f2225);
+    --fg: var(--color-text-primary, #eceeef);
+    --fg-2: var(--color-text-secondary, #a7adb3);
+    --fg-3: var(--color-text-tertiary, #7b8288);
+    --line: var(--color-border-primary, #2e3236);
+    --ok: var(--color-text-success, #5cc98f);
+    --warn: var(--color-text-warning, #f0b35a);
+    --fault: var(--color-text-danger, #ff7a70);
+    --ok-bg: var(--color-background-success, #16301f);
+    --warn-bg: var(--color-background-warning, #35270f);
+    --fault-bg: var(--color-background-danger, #3a1816);
+  }
+}
+
+:root[data-theme="dark"] {
+  --bg: var(--color-background-primary, #151719);
+  --bg-2: var(--color-background-secondary, #1f2225);
+  --fg: var(--color-text-primary, #eceeef);
+  --fg-2: var(--color-text-secondary, #a7adb3);
+  --fg-3: var(--color-text-tertiary, #7b8288);
+  --line: var(--color-border-primary, #2e3236);
+  --ok: var(--color-text-success, #5cc98f);
+  --warn: var(--color-text-warning, #f0b35a);
+  --fault: var(--color-text-danger, #ff7a70);
+  --ok-bg: var(--color-background-success, #16301f);
+  --warn-bg: var(--color-background-warning, #35270f);
+  --fault-bg: var(--color-background-danger, #3a1816);
+}
+
+* { box-sizing: border-box; }
+html, body { margin: 0; background: var(--bg); color: var(--fg); font: 14px/1.4 var(--sans); }
+p, h1, h2, ul { margin: 0; padding: 0; }
+ul { list-style: none; }
+
+#card { display: grid; gap: 14px; padding: 16px; max-width: 640px; }
+#card[aria-busy="true"] { opacity: 0.6; }
+.loading { color: var(--fg-2); }
+
+.eyebrow-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.eyebrow { font: 600 11px/1.2 var(--mono); letter-spacing: 0.08em; text-transform: uppercase; color: var(--fg-3); }
+.source { font: 600 11px/1 var(--mono); padding: 4px 7px; border-radius: 999px; border: 1px solid var(--line); color: var(--fg-2); white-space: nowrap; }
+.source-live { color: var(--ok); border-color: currentColor; }
+
+.headline { display: flex; align-items: center; gap: 10px; margin-top: 8px; font: 650 20px/1.25 var(--sans); overflow-wrap: anywhere; }
+.subhead { margin-top: 4px; color: var(--fg-2); overflow-wrap: anywhere; }
+
+.dot { flex: none; width: 10px; height: 10px; border-radius: 50%; background: var(--unknown); }
+.dot-ok { background: var(--ok); }
+.dot-warning { background: var(--warn); }
+.dot-fault { background: var(--fault); box-shadow: 0 0 0 4px var(--fault-bg); }
+
+.tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 8px; }
+.tile { padding: 12px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--bg-2); min-width: 0; }
+.tile-label { font: 600 11px/1.2 var(--mono); letter-spacing: 0.06em; text-transform: uppercase; color: var(--fg-3); }
+.tile-value { margin-top: 4px; font: 650 24px/1.1 var(--mono); font-variant-numeric: tabular-nums; }
+.tile-note { margin-top: 6px; font-size: 12px; color: var(--fg-2); overflow-wrap: anywhere; }
+.bar { display: flex; gap: 2px; height: 6px; margin-top: 8px; border-radius: 3px; overflow: hidden; }
+.seg { min-width: 4px; }
+.seg-ok { background: var(--ok); }
+.seg-warning { background: var(--warn); }
+.seg-fault { background: var(--fault); }
+.seg-unknown { background: var(--unknown); }
+
+.section { display: grid; gap: 8px; }
+.section-title { font: 600 11px/1.2 var(--mono); letter-spacing: 0.08em; text-transform: uppercase; color: var(--fg-3); }
+.rows { display: grid; border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; }
+.row { display: flex; align-items: center; gap: 12px; padding: 10px 12px; border-left: 3px solid var(--unknown); }
+.row + .row { border-top: 1px solid var(--line); }
+.row-ok { border-left-color: var(--ok); }
+.row-warning { border-left-color: var(--warn); }
+.row-fault { border-left-color: var(--fault); }
+.row-body { flex: 1; min-width: 0; }
+.row-title { display: flex; align-items: center; gap: 8px; font-weight: 600; overflow-wrap: anywhere; }
+.row-detail { margin-top: 2px; color: var(--fg-2); overflow-wrap: anywhere; }
+.row-meta { margin-top: 2px; font: 12px/1.3 var(--mono); color: var(--fg-3); overflow-wrap: anywhere; }
+
+.tag { flex: none; font: 700 10px/1 var(--mono); letter-spacing: 0.06em; text-transform: uppercase; padding: 3px 6px; border-radius: 4px; }
+.tag-ok { color: var(--ok); background: var(--ok-bg); }
+.tag-warning { color: var(--warn); background: var(--warn-bg); }
+.tag-fault { color: var(--fault); background: var(--fault-bg); }
+.tag-unknown { color: var(--fg-2); background: var(--unknown-bg); }
+
+button { font: 600 13px/1 var(--sans); color: var(--fg); background: var(--bg); border: 1px solid var(--line); border-radius: 8px; min-height: 36px; padding: 0 12px; cursor: pointer; }
+button:hover { background: var(--bg-2); }
+button:focus-visible { outline: 2px solid var(--color-ring-primary, var(--fg)); outline-offset: 2px; }
+button:disabled { opacity: 0.5; cursor: progress; }
+.row-action { flex: none; }
+
+.more { color: var(--fg-3); font-size: 12px; }
+.foot { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; padding-top: 10px; border-top: 1px solid var(--line); }
+.foot-note { font-size: 12px; color: var(--fg-3); }
+
+@media (prefers-reduced-motion: no-preference) {
+  #card { transition: opacity 120ms ease; }
+}

@@ -1,0 +1,46 @@
+{
+  "name": "qsys-reflect-mcp",
+  "version": "0.1.0",
+  "description": "MCP server for the Q-SYS Reflect Enterprise Manager public API: read-only fleet health, cores, systems, inventory, and events, with an MCP Apps status card and a demo mode that needs no key.",
+  "type": "module",
+  "license": "MIT",
+  "author": "Pablo Garcia Pizano",
+  "keywords": ["mcp", "model-context-protocol", "q-sys", "qsc", "reflect", "av", "audio-visual", "mcp-apps"],
+  "bin": {
+    "qsys-reflect-mcp": "dist/cli.js"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": ["dist", "README.md", "LICENSE"],
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "build": "node scripts/build-view.mjs && tsc -p tsconfig.build.json",
+    "pretypecheck": "node scripts/build-view.mjs",
+    "typecheck": "tsc --noEmit",
+    "test": "npm run build && node --test test/*.test.ts",
+    "start": "node dist/cli.js",
+    "start:http": "node dist/cli.js --http",
+    "demo": "node dist/cli.js --demo",
+    "preview": "npm run build && node preview/serve.mjs",
+    "spec:check": "node scripts/check-spec.mjs",
+    "screenshots": "node scripts/screenshots.mjs",
+    "prepublishOnly": "npm run typecheck && npm test"
+  },
+  "dependencies": {
+    "@mcp-ui/server": "6.1.0",
+    "@modelcontextprotocol/ext-apps": "1.7.5",
+    "@modelcontextprotocol/sdk": "1.29.0",
+    "zod": "3.25.76"
+  },
+  "devDependencies": {
+    "@types/node": "^22",
+    "esbuild": "0.25.12",
+    "typescript": "^5.9.3"
+  }
+}

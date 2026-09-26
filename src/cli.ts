@@ -71,9 +71,9 @@ if (flag("--http")) {
     console.error(`Refusing to bind ${host} without MCP_HTTP_TOKEN: anyone who can reach the port could read your Reflect organization.`);
     process.exit(1);
   }
-  const allowedHosts = local
-    ? LOCAL_HOSTS
-    : process.env.MCP_ALLOWED_HOSTS?.split(",").map((name) => name.trim().toLowerCase()).filter(Boolean);
+  // Extra hosts (for example a tunnel's hostname in front of a local bind) are added to, never replace, localhost.
+  const extraHosts = process.env.MCP_ALLOWED_HOSTS?.split(",").map((name) => name.trim().toLowerCase()).filter(Boolean) ?? [];
+  const allowedHosts = local ? [...LOCAL_HOSTS, ...extraHosts] : extraHosts.length ? extraHosts : undefined;
   const handle = createHttpHandler({ ...options, allowedHosts, authToken });
   createNodeServer((request, response) => {
     const { pathname } = new URL(request.url ?? "/", "http://localhost");

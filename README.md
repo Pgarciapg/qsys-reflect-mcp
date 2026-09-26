@@ -77,7 +77,7 @@ In Reflect, go to **Organization → API Tokens** and create a token. It is a 64
 | `QSYS_REFLECT_API_TOKEN_FILE` | Path to a file holding either the bare token or a `QSYS_REFLECT_API_TOKEN=...` line (`#` comments skipped) |
 | `QSYS_REFLECT_BASE_URL` | Override the API base (default `https://reflect.qsc.com/api/public/v0`) |
 | `MCP_HTTP_TOKEN` | Bearer secret HTTP callers must send; required off localhost |
-| `MCP_ALLOWED_HOSTS` | Comma-separated `Host` names to accept off localhost |
+| `MCP_ALLOWED_HOSTS` | Comma-separated extra `Host` names to accept, such as a tunnel hostname in front of a local bind |
 
 ## Tools
 

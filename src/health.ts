@@ -84,6 +84,8 @@ export interface SystemRow {
   id: number;
   name: string;
   core: string;
+  coreId: number | null;
+  site: string | null;
   platform: string;
   level: Level;
   status: string;
@@ -127,6 +129,8 @@ export const fleetHealth = (cores: Core[], systems: System[]): FleetHealth => {
       id: system.id,
       name: system.name,
       core: system.core?.name ?? "",
+      coreId: system.core?.id ?? null,
+      site: system.core ? siteForCore.get(system.core.id) ?? null : null,
       platform: system.design?.platform ?? "",
       level: systemLevel(system),
       status: systemReason(system) ?? system.status.message,

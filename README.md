@@ -8,8 +8,8 @@ An [MCP](https://modelcontextprotocol.io) server for **Q-SYS Reflect Enterprise 
 - **One server factory** serves stdio (Claude Desktop, Claude Code, Cursor) and stateless Streamable HTTP (remote connectors, serverless).
 
 <p>
-  <img src="docs/card-fleet.png" alt="Fleet health card: 5 issues need attention across 6 cores, 5 systems and 38 items, with faulted and warning rows and Open buttons" width="49%">
-  <img src="docs/card-system.png" alt="System card for Arena Bowl Audio: fault status, 11 items, the two faulted and one warning item listed first, and a Back to fleet button" width="49%">
+  <img src="docs/card-fleet.png" alt="Fleet health card: Q-SYS blue gradient header reading 5 issues need attention with an 89% health dial, a signal-flow schematic from Reflect to 6 cores and 5 systems with faulted runs in red, and issue rows with Open buttons" width="49%">
+  <img src="docs/card-system.png" alt="System card for Arena Bowl Audio: 73% health dial, the system wired to 7 locations with one light per item, South Bowl and Video Control faulted, and a Back to fleet button" width="49%">
 </p>
 
 <sub>The MCP Apps card on demo data, captured from <code>npm run preview</code> (<code>npm run screenshots</code> regenerates these). A <a href="docs/card-fleet-dark.png">dark theme</a> follows the host.</sub>
@@ -100,7 +100,13 @@ Every result puts a one-sentence `summary` first in `structuredContent`, then th
 
 ### The status card
 
-`get_fleet_health` and `get_system` declare the `ui://qsys-reflect/status-v1.html` resource (`text/html;profile=mcp-app`). The card is a single self-contained HTML file with no network access. It picks up the host's theme tokens, adapts to width, and uses the host bridge to drill from a faulted system on the fleet view into that system's inventory. Hosts without MCP Apps support get the same data as text. `--no-card` turns the card off.
+`get_fleet_health` and `get_system` declare the `ui://qsys-reflect/status-v2.html` resource (`text/html;profile=mcp-app`). The card uses QSC's published Q-SYS palette (Bold Blue `#0166FF`, Balanced Black `#1C1C1C`, Cyan `#1BD4DB`) but no Q-SYS logos or badges:
+
+- **Header:** the blue-to-cyan gradient carries the verdict and a health dial (share of items reporting OK).
+- **Schematic:** a Designer-style signal flow, Reflect → Cores → Systems, laid out from live data. Healthy wires carry moving signal, warning wires move slowly, and faulted runs flicker red. Redundant core pairs are bracketed, and each system shows its site. The drill-in wires the system out to every location its items report, with one light per item.
+- **Rows:** exactly what to fix, with an **Open** button that drills into the system through the host bridge.
+
+It follows the host's light or dark theme, respects reduced motion, and is a single self-contained HTML file with no network access. Every string from the API is rendered as text, never as markup. Hosts without MCP Apps support get the same data as text. `--no-card` turns the card off.
 
 ## What is verified and what is assumed
 

@@ -47,6 +47,9 @@ try {
   await send("Emulation.setDeviceMetricsOverride", { width: 600, height: 1400, deviceScaleFactor: 2, mobile: false });
   for (const [file, query] of SHOTS) {
     await send("Page.navigate", { url: BASE + query });
+    // The host sets data-ready when the tool result is sent; the card resizes a frame or two later.
+    for (let i = 0; i < 40 && !(await evaluate("document.body.dataset.ready === 'true'")); i += 1) await sleep(150);
+    await sleep(900);
     let last = -1;
     let stable = 0;
     for (let i = 0; i < 60 && stable < 3; i += 1) {

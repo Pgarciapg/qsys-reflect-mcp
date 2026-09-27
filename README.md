@@ -100,7 +100,7 @@ Every result puts a one-sentence `summary` first in `structuredContent`, then th
 
 ### The status card
 
-`get_fleet_health` and `get_system` declare the `ui://qsys-reflect/status-v2.html` resource (`text/html;profile=mcp-app`). The card uses QSC's published Q-SYS palette (Bold Blue `#0166FF`, Balanced Black `#1C1C1C`, Cyan `#1BD4DB`) but no Q-SYS logos or badges:
+`get_fleet_health` and `get_system` declare the `ui://qsys-reflect/status-v3.html` resource (`text/html;profile=mcp-app`). The card uses QSC's published Q-SYS palette (Bold Blue `#0166FF`, Balanced Black `#1C1C1C`, Cyan `#1BD4DB`) but no Q-SYS logos or badges:
 
 - **Header:** the blue-to-cyan gradient carries the verdict and a health dial (share of items reporting OK).
 - **Schematic:** a Designer-style signal flow, Reflect → Cores → Systems, laid out from live data. Healthy wires carry moving signal, warning wires move slowly, and faulted runs flicker red. Redundant core pairs are bracketed, and each system shows its site. The drill-in wires the system out to every location its items report, with one light per item.

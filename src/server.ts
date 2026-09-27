@@ -15,7 +15,7 @@ const cardResource = (html: string) => {
     content: { type: "rawHtml", htmlString: html },
     encoding: "text",
     // The card talks only to the host bridge; it loads nothing from the network.
-    metadata: { ui: { csp: { connectDomains: [], resourceDomains: [] } } },
+    metadata: { ui: { csp: { connectDomains: [], resourceDomains: [], frameDomains: [], baseUriDomains: [] } } },
   });
   if (resource.mimeType !== RESOURCE_MIME_TYPE) throw new Error(`Card resource must be ${RESOURCE_MIME_TYPE}, got ${resource.mimeType}.`);
   return resource;
@@ -42,7 +42,8 @@ export const createServer = (options: ServerOptions): McpServer => {
   for (const tool of toolDefinitions) {
     const config = { title: tool.title, description: tool.description, inputSchema: tool.inputSchema, annotations: tool.annotations };
     const run = async (args: Record<string, unknown>) => callTool(tool, context, args ?? {});
-    if (tool.card && options.cardHtml) registerAppTool(server, tool.name, { ...config, _meta: { ui: { resourceUri: CARD_URI } } }, run);
+    // visibility "app" lets the card itself call these tools (Open / Back to fleet); ChatGPT blocks card calls without it.
+    if (tool.card && options.cardHtml) registerAppTool(server, tool.name, { ...config, _meta: { ui: { resourceUri: CARD_URI, visibility: ["model", "app"] } } }, run);
     else server.registerTool(tool.name, config, run);
   }
   return server;

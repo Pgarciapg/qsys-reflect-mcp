@@ -1,6 +1,6 @@
 {
   "name": "qsys-reflect-mcp",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "MCP server for the Q-SYS Reflect Enterprise Manager public API: read-only fleet health, cores, systems, inventory, and events, with an MCP Apps status card and a demo mode that needs no key.",
   "type": "module",
   "license": "MIT",

@@ -14,6 +14,10 @@ An [MCP](https://modelcontextprotocol.io) server for **Q-SYS Reflect Enterprise 
 
 <sub>The MCP Apps card on demo data, captured from <code>npm run preview</code> (<code>npm run screenshots</code> regenerates these). A <a href="docs/card-fleet-dark.png">dark theme</a> follows the host.</sub>
 
+## Live demo
+
+A hosted copy runs on demo data at **`https://qsys-reflect-mcp-demo.vercel.app/mcp`** (Streamable HTTP, no auth, read-only). Add it as a custom MCP server in ChatGPT developer mode, Claude, or any MCP client and ask "is anything down across the campus?". `npm run build:vercel` rebuilds that deployment from this repo.
+
 ## Try it in 30 seconds (no key)
 
 ```bash

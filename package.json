@@ -30,6 +30,7 @@
     "preview": "npm run build && node preview/serve.mjs",
     "spec:check": "node scripts/check-spec.mjs",
     "screenshots": "node scripts/screenshots.mjs",
+    "build:vercel": "node scripts/build-view.mjs && node scripts/build-vercel.mjs",
     "prepublishOnly": "npm run typecheck && npm test"
   },
   "dependencies": {

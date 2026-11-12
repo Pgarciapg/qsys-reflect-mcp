@@ -166,6 +166,10 @@ preview/       a minimal local MCP Apps host
 
 Q-SYS and Q-SYS Reflect are trademarks of QSC, LLC. This is an independent project that uses Reflect's public API. The demo organization and every name, ID, and address in it are fictional.
 
+## Built by
+
+[Downriver Labs](https://downriverlabs.com) builds MCP connectors and ChatGPT apps that connect a business's own systems to AI assistants.
+
 ## License
 
 MIT

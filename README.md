@@ -16,7 +16,7 @@ An [MCP](https://modelcontextprotocol.io) server for **Q-SYS Reflect Enterprise 
 
 ## Live demo
 
-A hosted copy runs on demo data at **`https://qsys-reflect-mcp-demo.vercel.app/mcp`** (Streamable HTTP, no auth, read-only). Add it as a custom MCP server in ChatGPT developer mode, Claude, or any MCP client and ask "is anything down across the campus?". `npm run build:vercel` rebuilds that deployment from this repo.
+A hosted copy runs on demo data at **`https://qsys-reflect-mcp-demo.vercel.app/mcp`** (Streamable HTTP, no auth, read-only). Add it as a custom MCP server in ChatGPT developer mode, Claude, or any MCP client and ask "is anything down across the campus?". `npm run build:vercel` rebuilds that deployment from this repo. `npm run smoke` checks it end to end: all 12 tools, the card, and a not-found case (pass a URL to test a local server instead).
 
 ## Try it in 30 seconds (no key)
 

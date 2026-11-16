@@ -82,6 +82,7 @@ In Reflect, go to **Organization → API Tokens** and create a token. It is a 64
 | `QSYS_REFLECT_BASE_URL` | Override the API base (default `https://reflect.qsc.com/api/public/v0`) |
 | `MCP_HTTP_TOKEN` | Bearer secret HTTP callers must send; required off localhost |
 | `MCP_ALLOWED_HOSTS` | Comma-separated extra `Host` names to accept, such as a tunnel hostname in front of a local bind |
+| `PORT` | HTTP mode only (`--http`): the port to listen on when `--port` is not given. Default `3333`. Set it when your host assigns a port, as most container and app platforms do |
 
 ## Tools
 

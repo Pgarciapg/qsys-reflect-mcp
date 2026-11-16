@@ -123,3 +123,46 @@ test("the media tool refuses traversal before any request", async () => {
   const result = await call(client, "browse_core_media", { coreId: 101, path: "../../users/audit-events" });
   assert.equal(result.isError, true);
 });
+
+test("get_system_item returns the full record for one item, matching its inventory row", async () => {
+  const client = await connect();
+  const list = (await call(client, "list_system_items", { systemId: 202 })).structuredContent;
+  const row = list.items[0];
+  const { structuredContent: data, isError } = await call(client, "get_system_item", { systemId: 202, itemId: row.id });
+  assert.ok(!isError);
+  assert.equal(data.item.id, row.id);
+  assert.equal(data.item.name, row.name);
+  assert.equal(data.level, row.level);
+  assert.ok(data.summary.startsWith(`${data.item.name} (${data.item.model}, ${data.item.type}) at ${data.item.location}: `));
+  const missing = await call(client, "get_system_item", { systemId: 202, itemId: 999999 });
+  assert.equal(missing.isError, true);
+  assert.equal(missing.structuredContent.error.status, 404);
+});
+
+test("list_media_playlists lists a Core's playlists with track counts, and an empty Core says so", async () => {
+  const client = await connect();
+  const { structuredContent: data } = await call(client, "list_media_playlists", { coreId: 101 });
+  assert.deepEqual(data.playlists.map((list: any) => [list.name, list.count]), [["Preshow", 4], ["Intermission", 2]]);
+  assert.equal(data.summary, "Core 101: 2 playlists (Preshow, Intermission).");
+  const empty = (await call(client, "list_media_playlists", { coreId: 103 })).structuredContent;
+  assert.deepEqual(empty.playlists, []);
+  assert.equal(empty.summary, "Core 103: 0 playlists.");
+  const unknown = await call(client, "list_media_playlists", { coreId: 999 });
+  assert.equal(unknown.structuredContent.error.status, 404);
+});
+
+test("get_audit_events pages sign-in records and filters them by date", async () => {
+  const client = await connect();
+  const all = (await call(client, "get_audit_events", {})).structuredContent;
+  assert.equal(all.total, 4);
+  assert.equal(all.summary, "4 audit events match; this page has 4 from 3 users.");
+  assert.ok(all.items.every((event: any) => /has signed in$/.test(event.message)));
+  const first = (await call(client, "get_audit_events", { page: 1, pageSize: 2 })).structuredContent;
+  const second = (await call(client, "get_audit_events", { page: 2, pageSize: 2 })).structuredContent;
+  assert.equal(first.items.length, 2);
+  assert.equal(second.items.length, 2);
+  assert.notEqual(first.items[0].id, second.items[0].id);
+  // The demo clock is 2026-09-23 15:00 UTC; two sign-ins happened that day (2 and 5 hours earlier).
+  const today = (await call(client, "get_audit_events", { dates: "2026-09-23,2026-09-23" })).structuredContent;
+  assert.equal(today.total, 2);
+});

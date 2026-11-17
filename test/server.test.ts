@@ -15,11 +15,11 @@ test("every tool is annotated read-only and none write", async () => {
   }
 });
 
-test("the two card tools point at the card resource, served as an MCP App", async () => {
+test("the three card tools point at the card resource, served as an MCP App", async () => {
   const client = await connect();
   const { tools } = await client.listTools();
   const withCard = tools.filter((tool) => (tool._meta as any)?.ui?.resourceUri).map((tool) => tool.name).sort();
-  assert.deepEqual(withCard, ["get_fleet_health", "get_system"]);
+  assert.deepEqual(withCard, ["diagnose_system", "get_fleet_health", "get_system"]);
   // The card's own buttons call these tools, so they must be visible to the app as well as the model.
   for (const tool of tools.filter((entry) => (entry._meta as any)?.ui?.resourceUri)) assert.deepEqual((tool._meta as any).ui.visibility, ["model", "app"]);
   const { contents } = await client.readResource({ uri: CARD_URI });

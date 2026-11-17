@@ -102,3 +102,56 @@ test("the renderer never writes markup from data", async () => {
   const source = await readFile(new URL("../view/app.ts", import.meta.url), "utf8");
   assert.doesNotMatch(source, /innerHTML|outerHTML|insertAdjacentHTML|document\.write/);
 });
+
+// Diagnosis card (2026-11-17): mirrors diagnose_system, keeps honesty states non-green.
+import { diagnose } from "../src/diagnose.ts";
+import { DemoReflectClient } from "../src/reflect/demo.ts";
+import { NOW } from "./helpers.ts";
+
+test("diagnosis card: rows mirror the tool's findings in order, each with its first check", async () => {
+  const client = await connect();
+  const r = await call(client, "diagnose_system", { systemId: 202 });
+  const model = cardModel(r.structuredContent);
+  assert.equal(model.kind, "diagnosis");
+  assert.equal(model.level, "fault");
+  assert.equal(`${model.headlineStrong} ${model.headline}`, "3 findings, worst first");
+  const findings = r.structuredContent.findings;
+  assert.deepEqual(model.rows.map((row) => [row.level, row.title, row.detail, row.check]), findings.map((f: any) => [f.level, f.subject, f.title, f.check]));
+  assert.deepEqual(model.next, { label: "Open system", name: "get_system", arguments: { systemId: 202 } });
+});
+
+test("diagnosis card: all clear is green; an unreadable event log is NOT green; an unknown system says could not check", async () => {
+  const clear = cardModel({ ...(await diagnose(new DemoReflectClient(NOW), 201, 24, NOW)), source: "demo" });
+  assert.equal(clear.level, "ok");
+  assert.equal(clear.headline, "All clear");
+  const base = new DemoReflectClient(NOW);
+  const noEvents = new Proxy(base, { get: (t, k) => (k === "getCoreEvents" ? async () => { throw new Error("timed out"); } : (t as any)[k]?.bind?.(t) ?? (t as any)[k]) });
+  const partial = cardModel(await diagnose(noEvents as any, 201, 24, NOW));
+  assert.equal(partial.level, "unknown");
+  assert.match(partial.headline, /^Not an all-clear/);
+  assert.equal(partial.rows[0]?.tag, "Can't read");
+  assert.notEqual(partial.rows[0]?.level, "ok");
+  const gone = new Proxy(base, { get: (t, k) => (k === "getSystem" || k === "listSystemItems" ? async () => { throw new Error("Not found"); } : (t as any)[k]?.bind?.(t) ?? (t as any)[k]) });
+  const unknown = cardModel(await diagnose(gone as any, 999, 24, NOW));
+  assert.equal(unknown.level, "unknown");
+  assert.equal(unknown.headline, "Could not check this system");
+  assert.equal(unknown.next, undefined);
+});
+
+test("diagnosis card: cleared trouble shows as Cleared rows after the findings", () => {
+  const model = cardModel({ view: "diagnosis", system: { id: 1, name: "S", level: "ok", core: { id: 1, name: "C" } }, windowHours: 24, findings: [], cleared: [{ dateTime: "2026-09-23 12:00:00", severity: "Fault", source: "Amp", message: "Amp: protect" }], couldNotCheck: [], allClear: true });
+  assert.equal(model.level, "ok");
+  assert.deepEqual(model.rows.map((r) => r.tag), ["Cleared"]);
+});
+
+test("system card offers Diagnose when the system is not OK; diagnose_system links the card", async () => {
+  const client = await connect();
+  const sys = cardModel((await call(client, "get_system", { systemId: 202 })).structuredContent);
+  assert.deepEqual(sys.next, { label: "Diagnose", name: "diagnose_system", arguments: { systemId: 202 } });
+  const ok = cardModel((await call(client, "get_system", { systemId: 201 })).structuredContent);
+  assert.equal(ok.next, undefined);
+  const tool = (await client.listTools()).tools.find((t) => t.name === "diagnose_system") as any;
+  assert.ok(tool?._meta?.ui?.resourceUri);
+  const plain = (await (await connect({ card: false })).listTools()).tools.find((t) => t.name === "diagnose_system") as any;
+  assert.equal(plain?._meta?.ui, undefined);
+});

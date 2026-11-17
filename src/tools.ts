@@ -163,6 +163,7 @@ export const toolDefinitions: ToolDefinition[] = [
       hours: z.number().int().min(1).max(24 * 14).optional().describe(`How far back to read the core's events, in hours (default ${DEFAULT_WINDOW_HOURS}, max 336)`),
     },
     annotations: READ_ONLY,
+    card: true,
     async run({ client, now }, args) {
       const d = await diagnose(client, args.systemId as number, (args.hours as number | undefined) ?? DEFAULT_WINDOW_HOURS, (now ?? Date.now)());
       return { ...d, summary: diagnosisText(d) };

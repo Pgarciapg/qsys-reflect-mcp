@@ -169,6 +169,11 @@ const paint = (model: CardModel) => {
       const line = el("p", "row-title");
       line.append(el("span", `tag tag-${row.level}`, row.tag), document.createTextNode(row.title));
       body.append(line, el("p", "row-detail", row.detail));
+      if (row.check) {
+        const check = el("p", "row-check");
+        check.append(el("b", undefined, "Check first"), document.createTextNode(row.check));
+        body.append(check);
+      }
       if (row.meta) body.append(el("p", "row-meta", row.meta));
       item.append(body);
       if (row.action) {
@@ -185,13 +190,22 @@ const paint = (model: CardModel) => {
   }
   const footer = el("footer", "foot");
   footer.append(el("p", "foot-note", model.footnote));
+  const actions = el("div", "foot-actions");
+  if (model.next) {
+    const next = model.next;
+    const button = el("button", "btn", next.label);
+    button.type = "button";
+    button.addEventListener("click", () => run(next.name, next.arguments, button));
+    actions.append(button);
+  }
   if (model.back) {
     const back = model.back;
     const button = el("button", "btn btn-primary", back.label);
     button.type = "button";
     button.addEventListener("click", () => run(back.name, back.arguments, button));
-    footer.append(button);
+    actions.append(button);
   }
+  if (actions.childElementCount) footer.append(actions);
   inner.append(footer);
   root.append(inner);
 };

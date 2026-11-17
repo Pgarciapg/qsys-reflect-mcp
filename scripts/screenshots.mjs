@@ -12,6 +12,7 @@ const SHOTS = [
   ["card-fleet.png", "?bare&width=552&tool=get_fleet_health"],
   ["card-system.png", "?bare&width=552&tool=get_system&system=202"],
   ["card-fleet-dark.png", "?bare&width=552&theme=dark&tool=get_fleet_health"],
+  ["card-diagnosis.png", "?bare&width=552&tool=diagnose_system&system=202"],
 ];
 
 const profile = await mkdtemp(join(tmpdir(), "qsys-shots-"));

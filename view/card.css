@@ -145,3 +145,9 @@ svg text { font-family: var(--mono); }
   .headline { font-size: 25px; }
   .gauge { width: 88px; height: 88px; }
 }
+/* Diagnosis card (2026-11-17): first-check callout, and "could not read" rows that are never green. */
+.row.lvl-unknown::before { background: var(--tx3); }
+.tag-unknown { color: #ffffff; background: var(--tx3); }
+.row-check { margin-top: 6px; padding: 6px 8px; border-radius: 6px; background: var(--panel); border: 1px solid var(--line); font-size: 13px; color: var(--tx); overflow-wrap: anywhere; }
+.row-check b { display: block; font: 600 10px/1.4 var(--mono); letter-spacing: 0.06em; text-transform: uppercase; color: var(--accent-text); margin-bottom: 2px; }
+.foot-actions { display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }

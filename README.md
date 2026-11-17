@@ -91,7 +91,7 @@ In Reflect, go to **Organization → API Tokens** and create a token. It is a 64
 |---|---|---|
 | `get_fleet_health` (card) | `GET /cores`, `GET /systems` | What needs attention right now, worst first |
 | `get_system` (card) | `GET /systems/{id}`, `GET /systems/{id}/items` | One system's status and inventory, worst first |
-| `diagnose_system` | `GET /systems/{id}`, `GET /systems/{id}/items`, `GET /cores/{id}`, `GET /cores/{id}/events` | Why a system is unhappy and what to check first: findings worst first with when each was first logged, a suggested first check, cleared trouble apart, and never an all-clear while something could not be read |
+| `diagnose_system` (card) | `GET /systems/{id}`, `GET /systems/{id}/items`, `GET /cores/{id}`, `GET /cores/{id}/events` | Why a system is unhappy and what to check first: findings worst first with when each was first logged, a suggested first check, cleared trouble apart, and never an all-clear while something could not be read |
 | `list_cores` | `GET /cores` | Cores with model, firmware, site, redundancy, health; filter by level |
 | `get_core` | `GET /cores/{id}` | Full core record and when it came up |
 | `list_systems` | `GET /systems` | Systems with platform, health, item tallies; filter by level |
@@ -107,7 +107,7 @@ Every result puts a one-sentence `summary` first in `structuredContent`, then th
 
 ### The status card
 
-`get_fleet_health` and `get_system` declare the `ui://qsys-reflect/status-v3.html` resource (`text/html;profile=mcp-app`). The card uses QSC's published Q-SYS palette (Bold Blue `#0166FF`, Balanced Black `#1C1C1C`, Cyan `#1BD4DB`) but no Q-SYS logos or badges:
+`get_fleet_health`, `get_system` and `diagnose_system` declare the `ui://qsys-reflect/status-v3.html` resource (`text/html;profile=mcp-app`). The card uses QSC's published Q-SYS palette (Bold Blue `#0166FF`, Balanced Black `#1C1C1C`, Cyan `#1BD4DB`) but no Q-SYS logos or badges:
 
 - **Header:** the blue-to-cyan gradient carries the verdict and a health dial (share of items reporting OK).
 - **Schematic:** a Designer-style signal flow, Reflect → Cores → Systems, laid out from live data. Healthy wires carry moving signal, warning wires move slowly, and faulted runs flicker red. Redundant core pairs are bracketed, and each system shows its site. The drill-in wires the system out to every location its items report, with one light per item.

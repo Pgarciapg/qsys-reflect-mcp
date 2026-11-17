@@ -48,10 +48,12 @@ export interface Row {
   detail: string;
   meta: string;
   action?: { label: string; name: string; arguments: Record<string, unknown> };
+  /** Diagnosis rows: the suggested first check, shown under the detail. */
+  check?: string;
 }
 
 export interface CardModel {
-  kind: "fleet" | "system" | "error";
+  kind: "fleet" | "system" | "diagnosis" | "error";
   eyebrow: string;
   source: string | null;
   level: Level;
@@ -64,6 +66,8 @@ export interface CardModel {
   rows: Row[];
   footnote: string;
   back?: { label: string; name: string; arguments: Record<string, unknown> };
+  /** Secondary footer action (system card: Diagnose). */
+  next?: { label: string; name: string; arguments: Record<string, unknown> };
 }
 
 const plural = (count: number, word: string) => `${count} ${word}${count === 1 ? "" : "s"}`;
@@ -317,6 +321,55 @@ const system = (data: any): CardModel => {
     rows: info.reason && !rows.length ? [{ level, tag: LEVEL_LABEL[level], title: info.name ?? "System", detail: info.reason, meta: "System status" }] : rows,
     footnote: tail ? `${FOOT} · ${tail}` : FOOT,
     back: { label: "Back to fleet", name: "get_fleet_health", arguments: {} },
+    ...(info.id && level !== "ok" ? { next: { label: "Diagnose", name: "diagnose_system", arguments: { systemId: info.id } } } : {}),
+  };
+};
+
+// ---------- diagnosis ----------
+
+/**
+ * diagnose_system card. Rows are the tool's findings in the tool's order (never re-ranked), then could-not-check, then
+ * cleared trouble. Honesty states stay visible: an incomplete check is never green, and an unknown system says so.
+ */
+const diagnosis = (data: any): CardModel => {
+  const info = data.system ?? {};
+  const findings: any[] = Array.isArray(data.findings) ? data.findings : [];
+  const cleared: any[] = Array.isArray(data.cleared) ? data.cleared : [];
+  const cannot: string[] = Array.isArray(data.couldNotCheck) ? data.couldNotCheck : [];
+  const unknownSystem = info.level === "could_not_check";
+  const level: Level = data.allClear === true ? "ok" : findings.length ? worst(findings.map((f) => asLevel(f.level))) : "unknown";
+  const rows: Row[] = findings.map((f) => ({
+    level: asLevel(f.level),
+    tag: asLevel(f.level) === "warning" ? "Warn" : LEVEL_LABEL[asLevel(f.level)],
+    title: String(f.subject ?? ""),
+    detail: String(f.title ?? ""),
+    meta: [f.detail, f.since ? `First logged ${f.since}` : ""].filter(Boolean).join(" · "),
+    check: f.check ? String(f.check) : undefined,
+  }));
+  for (const c of cannot) rows.push({ level: "unknown", tag: "Can't read", title: String(c).split(":")[0] ?? "", detail: String(c).split(":").slice(1).join(":").trim() || String(c), meta: "Not checked, so this is not an all-clear" });
+  for (const c of cleared) rows.push({ level: "ok", tag: "Cleared", title: String(c.source ?? ""), detail: String(c.message ?? ""), meta: `Logged ${c.dateTime ?? ""}, OK now` });
+  const counts = (["fault", "warning", "unknown"] as Level[]).map((l) => [l, findings.filter((f) => asLevel(f.level) === l).length] as const).filter(([, n]) => n > 0);
+  const headline = unknownSystem
+    ? "Could not check this system"
+    : data.allClear === true
+      ? "All clear"
+      : findings.length
+        ? `${findings.length === 1 ? "finding" : "findings"}, worst first`
+        : "Not an all-clear: some parts could not be read";
+  return {
+    kind: "diagnosis",
+    eyebrow: ["Diagnosis", info.core?.name].filter(Boolean).join(" · "),
+    source: data.source === "demo" ? "Demo data" : data.source === "live" ? "Live" : null,
+    level: unknownSystem ? "unknown" : level,
+    headlineStrong: findings.length && !unknownSystem ? String(findings.length) : "",
+    headline,
+    subhead: [info.name, counts.map(([l, n]) => `${n} ${LEVEL_LABEL[l].toLowerCase()}`).join(", "), `events from the last ${data.windowHours ?? 24} h`].filter(Boolean).join(" · "),
+    gauge: null,
+    schematic: null,
+    rows,
+    footnote: `${FOOT} · Checks are suggestions from the status text`,
+    back: { label: "Back to fleet", name: "get_fleet_health", arguments: {} },
+    ...(info.id && !unknownSystem ? { next: { label: "Open system", name: "get_system", arguments: { systemId: info.id } } } : {}),
   };
 };
 
@@ -340,5 +393,6 @@ export const cardModel = (data: any): CardModel => {
   if (data.error) return errorModel(data.summary ?? "The request failed.");
   if (data.view === "fleet") return fleet(data);
   if (data.view === "system") return system(data);
+  if (data.view === "diagnosis") return diagnosis(data);
   return errorModel(data.summary ?? "This result has no card view.");
 };

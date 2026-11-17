@@ -2,8 +2,8 @@
 
 An [MCP](https://modelcontextprotocol.io) server for **Q-SYS Reflect Enterprise Manager**, QSC's cloud monitoring service for Q-SYS Cores. Ask Claude, ChatGPT, or any MCP client "is anything down across our campus?" and get an answer built from Reflect's public API. Hosts that support [MCP Apps](https://github.com/modelcontextprotocol/ext-apps) also show an inline status card.
 
-- **Read-only by design.** All 13 tools are annotated `readOnlyHint: true`. Nothing changes on a Core or System.
-- **Diagnosis, not just status.** `diagnose_system` lines up a system's faulted items with its core's event log and says what to check first.
+- **Read-only by design.** All 14 tools are annotated `readOnlyHint: true`. Nothing changes on a Core or System.
+- **Diagnosis, not just status.** `diagnose_system` lines up a system's faulted items with its core's event log and says what to check first. `diagnose_fleet` does that for every system that is not OK and rolls it up across the fleet.
 - **Fleet health rollup.** Reflect's public API has no alarms endpoint, so `get_fleet_health` works out health from core, system, and item status and ranks issues worst first.
 - **Runs without a key.** `--demo` serves a fictional campus that matches the published schema, so you can try it, test it, and demo it before you have Reflect credentials.
 - **One server factory** serves stdio (Claude Desktop, Claude Code, Cursor) and stateless Streamable HTTP (remote connectors, serverless).
@@ -13,11 +13,11 @@ An [MCP](https://modelcontextprotocol.io) server for **Q-SYS Reflect Enterprise 
   <img src="docs/card-system.png" alt="System card for Arena Bowl Audio: 73% health dial, the system wired to 7 locations with one light per item, South Bowl and Video Control faulted, and a Back to fleet button" width="49%">
 </p>
 
-<sub>The MCP Apps card on demo data, captured from <code>npm run preview</code> (<code>npm run screenshots</code> regenerates these). A <a href="docs/card-fleet-dark.png">dark theme</a> follows the host.</sub>
+<sub>The MCP Apps card on demo data, captured from <code>npm run preview</code> (<code>npm run screenshots</code> regenerates these). A <a href="docs/card-fleet-dark.png">dark theme</a> follows the host. Also: <a href="docs/card-fleet-diagnosis.png">fleet diagnosis</a>.</sub>
 
 ## Live demo
 
-A hosted copy runs on demo data at **`https://qsys-reflect-mcp-demo.vercel.app/mcp`** (Streamable HTTP, no auth, read-only). Add it as a custom MCP server in ChatGPT developer mode, Claude, or any MCP client and ask "is anything down across the campus?". `npm run build:vercel` rebuilds that deployment from this repo. `npm run smoke` checks it end to end: all 13 tools, the card, and a not-found case (pass a URL to test a local server instead).
+A hosted copy runs on demo data at **`https://qsys-reflect-mcp-demo.vercel.app/mcp`** (Streamable HTTP, no auth, read-only). Add it as a custom MCP server in ChatGPT developer mode, Claude, or any MCP client and ask "is anything down across the campus?". `npm run build:vercel` rebuilds that deployment from this repo. `npm run smoke` checks it end to end: all 14 tools, the card, and a not-found case (pass a URL to test a local server instead).
 
 ## Try it in 30 seconds (no key)
 
@@ -92,6 +92,7 @@ In Reflect, go to **Organization → API Tokens** and create a token. It is a 64
 | `get_fleet_health` (card) | `GET /cores`, `GET /systems` | What needs attention right now, worst first |
 | `get_system` (card) | `GET /systems/{id}`, `GET /systems/{id}/items` | One system's status and inventory, worst first |
 | `diagnose_system` (card) | `GET /systems/{id}`, `GET /systems/{id}/items`, `GET /cores/{id}`, `GET /cores/{id}/events` | Why a system is unhappy and what to check first: findings worst first with when each was first logged, a suggested first check, cleared trouble apart, and never an all-clear while something could not be read |
+| `diagnose_fleet` (card) | `GET /systems`, then the `diagnose_system` reads for each system that is not OK | What is wrong across the fleet and what to check first: findings rolled up by kind of problem, worst first, with how many systems each is on and a first check; a row per system that opens its diagnosis; systems that could not be read named apart, and never an all-clear while any could not be read |
 | `list_cores` | `GET /cores` | Cores with model, firmware, site, redundancy, health; filter by level |
 | `get_core` | `GET /cores/{id}` | Full core record and when it came up |
 | `list_systems` | `GET /systems` | Systems with platform, health, item tallies; filter by level |
@@ -107,7 +108,7 @@ Every result puts a one-sentence `summary` first in `structuredContent`, then th
 
 ### The status card
 
-`get_fleet_health`, `get_system` and `diagnose_system` declare the `ui://qsys-reflect/status-v3.html` resource (`text/html;profile=mcp-app`). The card uses QSC's published Q-SYS palette (Bold Blue `#0166FF`, Balanced Black `#1C1C1C`, Cyan `#1BD4DB`) but no Q-SYS logos or badges:
+`get_fleet_health`, `get_system`, `diagnose_system` and `diagnose_fleet` declare the `ui://qsys-reflect/status-v3.html` resource (`text/html;profile=mcp-app`). The card uses QSC's published Q-SYS palette (Bold Blue `#0166FF`, Balanced Black `#1C1C1C`, Cyan `#1BD4DB`) but no Q-SYS logos or badges:
 
 - **Header:** the blue-to-cyan gradient carries the verdict and a health dial (share of items reporting OK).
 - **Schematic:** a Designer-style signal flow, Reflect → Cores → Systems, laid out from live data. Healthy wires carry moving signal, warning wires move slowly, and faulted runs flicker red. Redundant core pairs are bracketed, and each system shows its site. The drill-in wires the system out to every location its items report, with one light per item.

@@ -3,6 +3,7 @@ import type { ToolAnnotations } from "@modelcontextprotocol/sdk/types.js";
 import { isSafeMediaPath, ReflectApiError } from "./reflect/client.ts";
 import type { Core, Item, PageQuery, ReflectReader, System } from "./reflect/types.ts";
 import { DEFAULT_WINDOW_HOURS, diagnose, diagnosisText } from "./diagnose.ts";
+import { diagnoseFleet } from "./diagnose-fleet.ts";
 import { fleetHealth, fleetSummary, itemLevel, systemItemCounts, systemLevel, systemReason, coreLevel, type Level } from "./health.ts";
 
 export type Source = "live" | "demo";
@@ -167,6 +168,20 @@ export const toolDefinitions: ToolDefinition[] = [
     async run({ client, now }, args) {
       const d = await diagnose(client, args.systemId as number, (args.hours as number | undefined) ?? DEFAULT_WINDOW_HOURS, (now ?? Date.now)());
       return { ...d, summary: diagnosisText(d) };
+    },
+  },
+  {
+    name: "diagnose_fleet",
+    title: "Diagnose the fleet",
+    description:
+      "What is wrong across the whole fleet, and what should I check first? Runs diagnose_system on every System that is not OK and rolls the findings up by kind of problem, worst first, with how many systems each is on and a suggested first check. Per-system rows underneath name each system's first finding; call diagnose_system with its id for the full answer. Systems that could not be read are counted and named apart, and it never reports all clear while any system could not be read.",
+    inputSchema: {
+      hours: z.number().int().min(1).max(24 * 14).optional().describe(`How far back to read each core's events, in hours (default ${DEFAULT_WINDOW_HOURS}, max 336)`),
+    },
+    annotations: READ_ONLY,
+    card: true,
+    async run({ client, now }, args) {
+      return { ...(await diagnoseFleet(client, (args.hours as number | undefined) ?? DEFAULT_WINDOW_HOURS, (now ?? Date.now)())) };
     },
   },
   {

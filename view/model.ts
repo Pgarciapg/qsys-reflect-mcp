@@ -53,7 +53,7 @@ export interface Row {
 }
 
 export interface CardModel {
-  kind: "fleet" | "system" | "diagnosis" | "error";
+  kind: "fleet" | "system" | "diagnosis" | "fleet-diagnosis" | "error";
   eyebrow: string;
   source: string | null;
   level: Level;
@@ -230,6 +230,7 @@ const fleet = (data: any): CardModel => {
     schematic: fleetSchematic(data.coreRows ?? [], data.systemRows ?? []),
     rows,
     footnote: extra > 0 ? `${FOOT} · +${extra} more in the result` : FOOT,
+    ...(asLevel(data.level) !== "ok" ? { next: { label: "Diagnose fleet", name: "diagnose_fleet", arguments: {} } } : {}),
   };
 };
 
@@ -373,6 +374,75 @@ const diagnosis = (data: any): CardModel => {
   };
 };
 
+// ---------- fleet diagnosis ----------
+
+/**
+ * diagnose_fleet card. The roll-up rows come first in the tool's order (never re-ranked), each with its first check;
+ * then one row per diagnosed system that opens its diagnose_system card; then systems that could not be read, grey.
+ * Green only for a genuine all-clear.
+ */
+const fleetDiagnosis = (data: any): CardModel => {
+  const findings: any[] = Array.isArray(data.findings) ? data.findings : [];
+  const systems: any[] = Array.isArray(data.systems) ? data.systems : [];
+  const unread: any[] = Array.isArray(data.couldNotRead) ? data.couldNotRead : [];
+  const notDiagnosed: any[] = Array.isArray(data.notDiagnosed) ? data.notDiagnosed : [];
+  const total = Number(data.total ?? 0);
+  const needing = systems.length + notDiagnosed.length;
+  const rows: Row[] = findings.map((f) => {
+    const names: string[] = (Array.isArray(f.systems) ? f.systems : []).map((s: any) => String(s.name));
+    return {
+      level: asLevel(f.level),
+      tag: asLevel(f.level) === "warning" ? "Warn" : LEVEL_LABEL[asLevel(f.level)],
+      title: String(f.category ?? ""),
+      detail: `${plural(names.length, "system")}: ${names.join(", ")}`,
+      meta: String(f.example ?? ""),
+      check: f.check ? String(f.check) : undefined,
+    };
+  });
+  for (const s of systems) {
+    const unreadable = s.level === "could_not_check";
+    rows.push({
+      level: unreadable ? "unknown" : asLevel(s.level),
+      tag: unreadable ? "Can't read" : "System",
+      title: String(s.name ?? ""),
+      detail: unreadable ? "Could not be read, so this is not an all-clear" : `${plural(Number(s.findings ?? 0), "finding")}${s.top ? `; first: ${s.top}` : ""}`,
+      meta: [s.core ? `Core ${s.core}` : "", Array.isArray(s.couldNotCheck) && s.couldNotCheck.length && !unreadable ? `${s.couldNotCheck.length} part(s) could not be read` : ""].filter(Boolean).join(" · "),
+      ...(s.id && !unreadable ? { action: { label: `Diagnose ${s.name}`, name: "diagnose_system", arguments: { systemId: s.id } } } : {}),
+    });
+  }
+  for (const c of unread.filter((u) => u.id === null)) rows.push({ level: "unknown", tag: "Can't read", title: String(c.name ?? ""), detail: String(c.reason ?? ""), meta: "Not checked, so this is not an all-clear" });
+  const level: Level = data.allClear === true ? "ok" : findings.length ? worst(findings.map((f) => asLevel(f.level))) : "unknown";
+  const headline =
+    data.allClear === true
+      ? "All clear"
+      : total === 0 && !unread.length
+        ? "No systems to diagnose"
+        : findings.length
+          ? `${findings.length === 1 ? "kind" : "kinds"} of problem, worst first`
+          : "Not an all-clear: some systems could not be read";
+  return {
+    kind: "fleet-diagnosis",
+    eyebrow: "Fleet diagnosis",
+    source: data.source === "demo" ? "Demo data" : data.source === "live" ? "Live" : null,
+    level,
+    headlineStrong: findings.length && data.allClear !== true ? String(findings.length) : "",
+    headline,
+    subhead: [
+      data.allClear === true ? `${plural(total, "system")} report OK` : `${plural(needing, "system")} of ${total} need attention`,
+      unread.length ? `${unread.length} could not be read` : "",
+      notDiagnosed.length ? `${notDiagnosed.length} not diagnosed in this call` : "",
+      `events from the last ${data.windowHours ?? 24} h`,
+    ]
+      .filter(Boolean)
+      .join(" · "),
+    gauge: null,
+    schematic: null,
+    rows,
+    footnote: `${FOOT} · Checks are suggestions from the status text`,
+    back: { label: "Back to fleet", name: "get_fleet_health", arguments: {} },
+  };
+};
+
 export const errorModel = (message: string): CardModel => ({
   kind: "error",
   eyebrow: "Q-SYS Reflect",
@@ -394,5 +464,6 @@ export const cardModel = (data: any): CardModel => {
   if (data.view === "fleet") return fleet(data);
   if (data.view === "system") return system(data);
   if (data.view === "diagnosis") return diagnosis(data);
+  if (data.view === "fleet-diagnosis") return fleetDiagnosis(data);
   return errorModel(data.summary ?? "This result has no card view.");
 };

@@ -18,6 +18,8 @@ export interface Finding {
   detail: string;
   /** Plain-English first thing to check. Rule-based, so phrased as a suggestion. */
   check: string;
+  /** Short kind of problem ("Device not on the network"), the same across systems, so a fleet view can group by it. */
+  category: string;
   /** Oldest matching non-Normal event in the window, when there is one. */
   since: string | null;
 }
@@ -46,20 +48,23 @@ const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? "" : "s"}`;
 const notable = (e: Event) => e.severity.toLowerCase() !== "normal";
 const levelOfSeverity = (s: string): Level => (/fault|error|critical/i.test(s) ? "fault" : /warn|compromised/i.test(s) ? "warning" : "unknown");
 
-/** Suggested first check, from the status text. Ordered: the most specific rule wins. */
-export const firstCheck = (text: string, online: boolean | null | undefined): string => {
+/** Suggested first check and its short category, from the status text. Ordered: the most specific rule wins. */
+export const classify = (text: string, online: boolean | null | undefined): { category: string; check: string } => {
   const t = text.toLowerCase();
   if (online === false || /missing|not present|offline|unreachable|no response/.test(t))
-    return "The device is not on the network: check its power (or PoE), its network cable and switch port, and that its IP is in the core's subnet.";
-  if (/licen[cs]e/.test(t)) return "A license has expired or is not installed: renew it in Q-SYS Designer or Enterprise Manager, then restart the system.";
-  if (/short|overcurrent|protect/.test(t)) return "An output went into protection: check the speaker wiring and load on that channel before resetting it.";
-  if (/clip/.test(t)) return "An input is clipping: lower the gain at the source or the input stage.";
-  if (/firmware|version mismatch|mismatch/.test(t)) return "Firmware does not match the design: update the device from Q-SYS Designer (or Reflect) to the design's version.";
-  if (/temperature|thermal|overheat|fan/.test(t)) return "Heat warning: check ventilation and fans around the device.";
-  if (/redundan|standby|backup/.test(t)) return "Redundancy is degraded: check the backup core or device is powered, networked and in standby.";
-  if (/clock|ptp|sync/.test(t)) return "Clock sync problem: check the PTP master and the network path between devices.";
-  return "Open the item in Q-SYS Designer or Reflect and read its full status.";
+    return { category: "Device not on the network", check: "The device is not on the network: check its power (or PoE), its network cable and switch port, and that its IP is in the core's subnet." };
+  if (/licen[cs]e/.test(t)) return { category: "License expired or missing", check: "A license has expired or is not installed: renew it in Q-SYS Designer or Enterprise Manager, then restart the system." };
+  if (/short|overcurrent|protect/.test(t)) return { category: "Output in protection", check: "An output went into protection: check the speaker wiring and load on that channel before resetting it." };
+  if (/clip/.test(t)) return { category: "Input clipping", check: "An input is clipping: lower the gain at the source or the input stage." };
+  if (/firmware|version mismatch|mismatch/.test(t)) return { category: "Firmware does not match the design", check: "Firmware does not match the design: update the device from Q-SYS Designer (or Reflect) to the design's version." };
+  if (/temperature|thermal|overheat|fan/.test(t)) return { category: "Heat warning", check: "Heat warning: check ventilation and fans around the device." };
+  if (/redundan|standby|backup/.test(t)) return { category: "Redundancy degraded", check: "Redundancy is degraded: check the backup core or device is powered, networked and in standby." };
+  if (/clock|ptp|sync/.test(t)) return { category: "Clock sync problem", check: "Clock sync problem: check the PTP master and the network path between devices." };
+  return { category: "Other status", check: "Open the item in Q-SYS Designer or Reflect and read its full status." };
 };
+
+/** Suggested first check, from the status text. */
+export const firstCheck = (text: string, online: boolean | null | undefined): string => classify(text, online).check;
 
 /**
  * Reflect event times look like "2026-09-23 02:00:00" with no zone. They are read as UTC (the demo writes UTC, and the
@@ -102,10 +107,10 @@ export const diagnose = async (client: ReflectReader, systemId: number, windowHo
   const tallyOnly = (details: string) => /^\s*(\d+\s+[A-Za-z ]+?)(,\s*\d+\s+[A-Za-z ]+?)*\.?\s*$/.test(details);
   if (core && coreLevel(core) !== "ok" && !(tallyOnly(core.status.details ?? "") && (items ?? []).some((i) => itemLevel(i) !== "ok"))) {
     const text = `${core.status.message}${core.status.details ? `: ${core.status.details}` : ""}`;
-    findings.push({ level: coreLevel(core), subject: `Core ${core.name}`, title: `The core reports ${core.status.message}`, detail: `${core.name} (${core.model}, firmware ${core.firmware}): ${text}.`, check: `Check the core first; every item on this system runs through it. ${firstCheck(text, null)}`, since: null });
+    findings.push({ level: coreLevel(core), subject: `Core ${core.name}`, title: `The core reports ${core.status.message}`, detail: `${core.name} (${core.model}, firmware ${core.firmware}): ${text}.`, check: `Check the core first; every item on this system runs through it. ${firstCheck(text, null)}`, category: "Core reports a problem", since: null });
   }
   if (core?.redundancy && !/active|standby/i.test(core.redundancy.state)) {
-    findings.push({ level: "warning", subject: `Core ${core.name}`, title: `Core redundancy is ${core.redundancy.state}`, detail: `Role ${core.redundancy.role}, state ${core.redundancy.state}.`, check: firstCheck("redundancy", null), since: null });
+    findings.push({ level: "warning", subject: `Core ${core.name}`, title: `Core redundancy is ${core.redundancy.state}`, detail: `Role ${core.redundancy.role}, state ${core.redundancy.state}.`, ...classify("redundancy", null), since: null });
   }
 
   // 2. A design-level reason (for example an expired license) stops the whole system.
@@ -113,7 +118,7 @@ export const diagnose = async (client: ReflectReader, systemId: number, windowHo
   if (reason) {
     const match = recent.find((e) => reason.includes(e.message.replace(/\.$/, "")) || e.message.includes(reason.split(".")[0]!));
     if (match) used.add(match.id);
-    findings.push({ level: "fault", subject: "Design", title: "The system is stopped by its design", detail: reason, check: firstCheck(reason, null), since: match?.dateTime ?? null });
+    findings.push({ level: "fault", subject: "Design", title: "The system is stopped by its design", detail: reason, ...classify(reason, null), since: match?.dateTime ?? null });
   }
 
   // 3. Each item that is not OK, with the first event that mentions it.
@@ -128,7 +133,7 @@ export const diagnose = async (client: ReflectReader, systemId: number, windowHo
       subject: item.name,
       title: `${item.name} (${item.model || item.type}) reports ${item.status?.message ?? "no status"}`,
       detail: `${status}${item.location ? `. Location: ${item.location}` : ""}${item.isOnline === false ? ". Offline" : ""}.`,
-      check: firstCheck(status, item.isOnline),
+      ...classify(status, item.isOnline),
       since: first?.dateTime ?? null,
     });
   }
@@ -139,7 +144,7 @@ export const diagnose = async (client: ReflectReader, systemId: number, windowHo
   for (const e of unmatched) {
     const isItem = (items ?? []).some((i) => i.name === e.source);
     if (isItem) cleared.push({ dateTime: e.dateTime, severity: e.severity, source: e.source, message: e.message });
-    else findings.push({ level: levelOfSeverity(e.severity), subject: e.source, title: `${e.category} event: ${e.message}`, detail: `${e.severity} from ${e.source} at ${e.dateTime}.`, check: firstCheck(e.message, null), since: e.dateTime });
+    else findings.push({ level: levelOfSeverity(e.severity), subject: e.source, title: `${e.category} event: ${e.message}`, detail: `${e.severity} from ${e.source} at ${e.dateTime}.`, ...classify(e.message, null), since: e.dateTime });
   }
 
   findings.sort((a, b) => RANK[a.level] - RANK[b.level] || (a.since ?? "~").localeCompare(b.since ?? "~") || a.subject.localeCompare(b.subject));

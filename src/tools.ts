@@ -2,6 +2,7 @@ import { z } from "zod";
 import type { ToolAnnotations } from "@modelcontextprotocol/sdk/types.js";
 import { isSafeMediaPath, ReflectApiError } from "./reflect/client.ts";
 import type { Core, Item, PageQuery, ReflectReader, System } from "./reflect/types.ts";
+import { DEFAULT_WINDOW_HOURS, diagnose, diagnosisText } from "./diagnose.ts";
 import { fleetHealth, fleetSummary, itemLevel, systemItemCounts, systemLevel, systemReason, coreLevel, type Level } from "./health.ts";
 
 export type Source = "live" | "demo";
@@ -9,6 +10,8 @@ export type Source = "live" | "demo";
 export interface ToolContext {
   client: ReflectReader;
   source: Source;
+  /** Clock for time windows (tests and the fixed-date demo). Defaults to Date.now. */
+  now?: () => number;
 }
 
 /** Everything a tool returns. `summary` leads structuredContent because some hosts pass only that to the model. */
@@ -148,6 +151,21 @@ export const toolDefinitions: ToolDefinition[] = [
     card: true,
     async run({ client }, args) {
       return systemView(client, args.systemId as number);
+    },
+  },
+  {
+    name: "diagnose_system",
+    title: "Diagnose a system",
+    description:
+      "Why is this System unhappy, and what should I check first? One call that reads the System, its items, the Core it runs on and that Core's recent non-Normal events, lines them up, and returns findings worst first, each with when it was first logged and a suggested first check. Cleared trouble and anything that could not be read are listed apart; it never reports all clear while something could not be checked. Use after get_fleet_health points at a system.",
+    inputSchema: {
+      systemId: id("System"),
+      hours: z.number().int().min(1).max(24 * 14).optional().describe(`How far back to read the core's events, in hours (default ${DEFAULT_WINDOW_HOURS}, max 336)`),
+    },
+    annotations: READ_ONLY,
+    async run({ client, now }, args) {
+      const d = await diagnose(client, args.systemId as number, (args.hours as number | undefined) ?? DEFAULT_WINDOW_HOURS, (now ?? Date.now)());
+      return { ...d, summary: diagnosisText(d) };
     },
   },
   {

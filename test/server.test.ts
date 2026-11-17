@@ -7,7 +7,7 @@ import { call, connect } from "./helpers.ts";
 test("every tool is annotated read-only and none write", async () => {
   const client = await connect();
   const { tools } = await client.listTools();
-  assert.equal(tools.length, 12);
+  assert.equal(tools.length, 13);
   for (const tool of tools) {
     assert.equal(tool.annotations?.readOnlyHint, true, tool.name);
     assert.equal(tool.annotations?.destructiveHint, false, tool.name);
@@ -33,7 +33,7 @@ test("the two card tools point at the card resource, served as an MCP App", asyn
 test("--no-card serves the same tools without UI metadata", async () => {
   const client = await connect({ card: false });
   const { tools } = await client.listTools();
-  assert.equal(tools.length, 12);
+  assert.equal(tools.length, 13);
   assert.ok(tools.every((tool) => !(tool._meta as any)?.ui));
 });
 

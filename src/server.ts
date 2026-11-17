@@ -27,10 +27,10 @@ export const createServer = (options: ServerOptions): McpServer => {
     { name: "qsys-reflect", title: "Q-SYS Reflect", version: SERVER_VERSION },
     {
       instructions:
-        "Read-only access to a Q-SYS Reflect Enterprise Manager organization. Call get_fleet_health first to see what needs attention, then drill into get_system, list_system_items, or get_core_events. Every tool reads; none change a Core or System.",
+        "Read-only access to a Q-SYS Reflect Enterprise Manager organization. Call get_fleet_health first to see what needs attention, then diagnose_system for why a system is unhappy and what to check first, or drill into get_system, list_system_items, or get_core_events. Every tool reads; none change a Core or System.",
     },
   );
-  const context: ToolContext = { client: options.client, source: options.source };
+  const context: ToolContext = { client: options.client, source: options.source, ...(options.now ? { now: options.now } : {}) };
 
   if (options.cardHtml) {
     const resource = cardResource(options.cardHtml);

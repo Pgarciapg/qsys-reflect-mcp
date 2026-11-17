@@ -2,7 +2,8 @@
 
 An [MCP](https://modelcontextprotocol.io) server for **Q-SYS Reflect Enterprise Manager**, QSC's cloud monitoring service for Q-SYS Cores. Ask Claude, ChatGPT, or any MCP client "is anything down across our campus?" and get an answer built from Reflect's public API. Hosts that support [MCP Apps](https://github.com/modelcontextprotocol/ext-apps) also show an inline status card.
 
-- **Read-only by design.** All 12 tools are annotated `readOnlyHint: true`. Nothing changes on a Core or System.
+- **Read-only by design.** All 13 tools are annotated `readOnlyHint: true`. Nothing changes on a Core or System.
+- **Diagnosis, not just status.** `diagnose_system` lines up a system's faulted items with its core's event log and says what to check first.
 - **Fleet health rollup.** Reflect's public API has no alarms endpoint, so `get_fleet_health` works out health from core, system, and item status and ranks issues worst first.
 - **Runs without a key.** `--demo` serves a fictional campus that matches the published schema, so you can try it, test it, and demo it before you have Reflect credentials.
 - **One server factory** serves stdio (Claude Desktop, Claude Code, Cursor) and stateless Streamable HTTP (remote connectors, serverless).
@@ -16,7 +17,7 @@ An [MCP](https://modelcontextprotocol.io) server for **Q-SYS Reflect Enterprise 
 
 ## Live demo
 
-A hosted copy runs on demo data at **`https://qsys-reflect-mcp-demo.vercel.app/mcp`** (Streamable HTTP, no auth, read-only). Add it as a custom MCP server in ChatGPT developer mode, Claude, or any MCP client and ask "is anything down across the campus?". `npm run build:vercel` rebuilds that deployment from this repo. `npm run smoke` checks it end to end: all 12 tools, the card, and a not-found case (pass a URL to test a local server instead).
+A hosted copy runs on demo data at **`https://qsys-reflect-mcp-demo.vercel.app/mcp`** (Streamable HTTP, no auth, read-only). Add it as a custom MCP server in ChatGPT developer mode, Claude, or any MCP client and ask "is anything down across the campus?". `npm run build:vercel` rebuilds that deployment from this repo. `npm run smoke` checks it end to end: all 13 tools, the card, and a not-found case (pass a URL to test a local server instead).
 
 ## Try it in 30 seconds (no key)
 
@@ -90,6 +91,7 @@ In Reflect, go to **Organization → API Tokens** and create a token. It is a 64
 |---|---|---|
 | `get_fleet_health` (card) | `GET /cores`, `GET /systems` | What needs attention right now, worst first |
 | `get_system` (card) | `GET /systems/{id}`, `GET /systems/{id}/items` | One system's status and inventory, worst first |
+| `diagnose_system` | `GET /systems/{id}`, `GET /systems/{id}/items`, `GET /cores/{id}`, `GET /cores/{id}/events` | Why a system is unhappy and what to check first: findings worst first with when each was first logged, a suggested first check, cleared trouble apart, and never an all-clear while something could not be read |
 | `list_cores` | `GET /cores` | Cores with model, firmware, site, redundancy, health; filter by level |
 | `get_core` | `GET /cores/{id}` | Full core record and when it came up |
 | `list_systems` | `GET /systems` | Systems with platform, health, item tallies; filter by level |

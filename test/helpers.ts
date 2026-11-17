@@ -8,7 +8,7 @@ import { createServer } from "../src/server.ts";
 export const NOW = Date.UTC(2026, 8, 23, 15, 0, 0);
 
 export const connect = async ({ card = true } = {}) => {
-  const server = createServer({ client: new DemoReflectClient(NOW), source: "demo", cardHtml: card ? CARD_HTML : undefined });
+  const server = createServer({ client: new DemoReflectClient(NOW), source: "demo", now: () => NOW, cardHtml: card ? CARD_HTML : undefined });
   const client = new Client({ name: "qsys-reflect-test", version: "0.0.0" });
   const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
   await Promise.all([client.connect(clientTransport), server.connect(serverTransport)]);
